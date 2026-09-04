@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>酒店记账系统</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --brand: #6d4aff;
+    --brand-light: #f0ecff;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --orange: #ea580c;
+    --orange-light: #ffedd5;
+    --text: #1a1a1a;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+    padding-bottom: 70px;
+  }
+  /* 顶部标题 */
+  .header {
+    background: linear-gradient(135deg, #6d4aff, #8b5cff);
+    color: #fff;
+    padding: 16px 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(109,74,255,0.3);
+  }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header .sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+  /* Tab 导航 */
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 60px;
+    z-index: 99;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .tab.active {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
+  }
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* 卡片 */
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-title::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    background: var(--brand);
+    border-radius: 2px;
+  }
+
+  /* 表单 */
+  .form-group { margin-bottom: 14px; }
+  .form-group:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-row {
+    display: flex;
+    gap: 12px;
+  }
+  .form-row > .form-group { flex: 1; }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--card);
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(109,74,255,0.1);
+  }
+  input[type="date"] { font-family: inherit; }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* 收入项 */
+  .income-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .income-item {
+    background: var(--brand-light);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .income-item label {
+    color: #5b3ddb;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .income-item input {
+    border: none;
+    background: transparent;
+    padding: 2px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--brand);
+  }
+  .income-item input:focus { box-shadow: none; }
+  .income-item input::placeholder { color: #c4b8f5; font-weight: 400; font-size: 14px; }
+
+  /* 成本项 */
+  .cost-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 10px;
+    background: #fff7f7;
+    border-radius: 8px;
+    border: 1px solid #ffe3e3;
+  }
+  .cost-item input[type="number"] {
+    width: 100px;
+    flex-shrink: 0;
+  }
+  .cost-item input[type="text"] {
+    flex: 1;
+  }
+  .cost-item .del-cost {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: var(--red-light);
+    color: var(--red);
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* 按钮 */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--brand);
+    color: #fff;
+    width: 100%;
+    padding: 13px;
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+  .btn-outline {
+    background: var(--card);
+    color: var(--brand);
+    border: 1px solid var(--brand);
+  }
+  .btn-add-cost {
+    background: #fff7f7;
+    color: var(--red);
+    border: 1px dashed var(--red);
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  /* 总额显示 */
+  .total-bar {
+    background: linear-gradient(135deg, #f0ecff, #e8e0ff);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .total-bar .lbl { font-size: 13px; color: #5b3ddb; }
+  .total-bar .val { font-size: 22px; font-weight: 700; color: var(--brand); }
+  .total-bar.cost { background: linear-gradient(135deg, #fff1f1, #ffe0e0); }
+  .total-bar.cost .lbl { color: #b91c1c; }
+  .total-bar.cost .val { color: var(--red); }
+  .total-bar.profit { background: linear-gradient(135deg, #dcfce7, #bbf7d0); }
+  .total-bar.profit .lbl { color: #15803d; }
+  .total-bar.profit .val { color: var(--green); }
+
+  /* 记录列表 */
+  .record-day {
+    background: var(--card);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .record-day-header {
+    padding: 12px 16px;
+    background: var(--brand-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .record-day-header .date {
+    font-weight: 600;
+    font-size: 15px;
+    color: #5b3ddb;
+  }
+  .record-day-header .summary {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .record-day-header .summary .profit-pos { color: var(--green); font-weight: 600; }
+  .record-day-header .summary .profit-neg { color: var(--red); font-weight: 600; }
+  .record-day-body { padding: 12px 16px; display: none; }
+  .record-day-body.open { display: block; }
+  .record-section { margin-bottom: 10px; }
+  .record-section:last-child { margin-bottom: 0; }
+  .record-section-title {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .record-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 14px;
+  }
+  .record-line .name { color: var(--text); }
+  .record-line .amount { font-weight: 500; }
+  .record-line.cost .name { color: var(--text-muted); font-size: 13px; }
+  .record-line.cost .amount { color: var(--red); }
+  .record-line.revenue .amount { color: var(--green); }
+  .record-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* 统计 */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-card .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .stat-card .stat-value { font-size: 20px; font-weight: 700; }
+  .stat-card.revenue .stat-value { color: var(--green); }
+  .stat-card.cost .stat-value { color: var(--red); }
+  .stat-card.profit .stat-value { color: var(--brand); }
+  .stat-card.rooms .stat-value { color: var(--orange); }
+
+  /* 日报卡片（用于截图分享） */
+  .report-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+  }
+  .report-card-header {
+    background: linear-gradient(135deg, #6d4aff, #8b5cff);
+    color: #fff;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .report-card-header .rpt-title { font-size: 18px; font-weight: 600; }
+  .report-card-header .rrt-date { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+  .report-card-body { padding: 16px; }
+  .report-section { margin-bottom: 16px; }
+  .report-section:last-child { margin-bottom: 0; }
+  .report-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+  }
+  .report-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 14px;
+  }
+  .report-line .rl-label { color: var(--text); }
+  .report-line .rl-value { font-weight: 500; }
+  .report-line.revenue .rl-value { color: var(--green); }
+  .report-line.cost .rl-value { color: var(--red); }
+  .report-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0 4px;
+    margin-top: 4px;
+    border-top: 2px solid var(--border);
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .report-total.profit .rl-value { color: var(--green); }
+  .report-total.loss .rl-value { color: var(--red); }
+  .report-card-footer {
+    text-align: center;
+    padding: 10px;
+    background: #f9f9f9;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* 筛选 */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .filter-bar input[type="month"] {
+    width: 140px;
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  .filter-bar .filter-label { font-size: 13px; color: var(--text-muted); }
+
+  /* 空状态 */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .empty .icon { font-size: 40px; margin-bottom: 8px; opacity: 0.3; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 999;
+    display: none;
+    white-space: nowrap;
+  }
+  .toast.show { display: block; animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* 底部操作栏 */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .bottom-bar .btn-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+  }
+  .bottom-bar .btn-tab .icon { font-size: 20px; display: block; margin-bottom: 2px; }
+  .bottom-bar .btn-tab.active { color: var(--brand); }
+
+  .container { max-width: 600px; margin: 0 auto; }
+
+  /* 报表选择 */
+  .report-day-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+  .report-day-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    background: var(--card);
+  }
+  .report-day-item:active { background: var(--bg); }
+  .report-day-item.selected { border-color: var(--brand); background: var(--brand-light); }
+
+  .actions-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .actions-row .btn { flex: 1; }
+
+  @media (max-width: 380px) {
+    .income-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 顶部 -->
+  <div class="header">
+    <h1>🏨 酒店记账系统</h1>
+    <div class="sub" id="hotelName">营业记账 · 股东共享</div>
+  </div>
+
+  <!-- Tab 导航 -->
+  <div class="tabs">
+    <div class="tab active" data-page="entry">录入</div>
+    <div class="tab" data-page="records">记录</div>
+    <div class="tab" data-page="stats">统计</div>
+    <div class="tab" data-page="report">日报</div>
+  </div>
+
+  <!-- 录入页 -->
+  <div class="page active" id="page-entry">
+    <div class="card">
+      <div class="card-title">选择日期</div>
+      <input type="date" id="entryDate">
+    </div>
+
+    <div class="card">
+      <div class="card-title">营业收入</div>
+      <div class="form-group">
+        <label>卖房间数</label>
+        <input type="number" id="roomsSold" min="0" placeholder="今日卖出房间数" oninput="calcTotals()">
+      </div>
+      <div class="income-grid">
+        <div class="income-item">
+          <label>现金收入</label>
+          <input type="number" id="revCash" min="0" step="0.01" placeholder="0.00" oninput="calcTotals()">
+        </div>
+        <div class="income-item">
+          <label>微信支付宝</label>
+          <input type="number" id="revWechat" min="0" step="0.01" placeholder="0.00" oninput="calcTotals()">
+        </div>
+        <div class="income-item">
+          <label>OTA收入</label>
+          <input type="number" id="revOta" min="0" step="0.01" placeholder="0.00" oninput="calcTotals()">
+        </div>
+        <div class="income-item">
+          <label>总部直连</label>
+          <input type="number" id="revHQ" min="0" step="0.01" placeholder="0.00" oninput="calcTotals()">
+        </div>
+      </div>
+      <div class="total-bar">
+        <span class="lbl">营业收入合计</span>
+        <span class="val" id="revTotal">¥0.00</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">成本支出</div>
+      <div id="costList"></div>
+      <button class="btn-add-cost" onclick="addCostItem()">+ 添加支出项</button>
+      <div class="total-bar cost">
+        <span class="lbl">成本支出合计</span>
+        <span class="val" id="costTotal">¥0.00</span>
+      </div>
+    </div>
+
+    <div class="total-bar profit" style="margin-bottom:12px">
+      <span class="lbl">今日净利润</span>
+      <span class="val" id="profitTotal">¥0.00</span>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveRecord()">保存当日记账</button>
+  </div>
+
+  <!-- 记录页 -->
+  <div class="page" id="page-records">
+    <div class="filter-bar">
+      <span class="filter-label">月份：</span>
+      <input type="month" id="filterMonth" onchange="renderRecords()">
+    </div>
+    <div id="recordsList"></div>
+  </div>
+
+  <!-- 统计页 -->
+  <div class="page" id="page-stats">
+    <div class="filter-bar">
+      <span class="filter-label">月份：</span>
+      <input type="month" id="statsMonth" onchange="renderStats()">
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card revenue">
+        <div class="stat-label">营业收入</div>
+        <div class="stat-value" id="statRev">¥0</div>
+      </div>
+      <div class="stat-card cost">
+        <div class="stat-label">成本支出</div>
+        <div class="stat-value" id="statCost">¥0</div>
+      </div>
+      <div class="stat-card profit">
+        <div class="stat-label">净利润</div>
+        <div class="stat-value" id="statProfit">¥0</div>
+      </div>
+      <div class="stat-card rooms">
+        <div class="stat-label">总房间数</div>
+        <div class="stat-value" id="statRooms">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">收入构成</div>
+      <div id="revBreakdown"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">每日明细</div>
+      <div id="dailyBreakdown"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">数据备份与恢复</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">
+        ⚠️ 数据只存在当前设备浏览器里，电脑损坏/清缓存会丢失。<br>
+        建议定期备份到微信文件传输助手或网盘。
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-primary btn-sm" onclick="exportData()">导出备份</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()">导入恢复</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px" id="backupInfo"></div>
+    </div>
+  </div>
+
+  <!-- 日报页 -->
+  <div class="page" id="page-report">
+    <div class="card">
+      <div class="card-title">选择日期生成日报</div>
+      <div class="report-day-list" id="reportDayList"></div>
+      <div class="actions-row">
+        <button class="btn btn-outline btn-sm" onclick="captureReport()">截图分享</button>
+        <button class="btn btn-outline btn-sm" onclick="copyReportText()">复制文字</button>
+      </div>
+    </div>
+    <div id="reportPreview"></div>
+  </div>
+</div>
+
+<!-- 底部导航 -->
+<div class="bottom-bar">
+  <button class="btn-tab active" data-page="entry" onclick="switchTab('entry')"><span class="icon">✏️</span>录入</button>
+  <button class="btn-tab" data-page="records" onclick="switchTab('records')"><span class="icon">📋</span>记录</button>
+  <button class="btn-tab" data-page="stats" onclick="switchTab('stats')"><span class="icon">📊</span>统计</button>
+  <button class="btn-tab" data-page="report" onclick="switchTab('report')"><span class="icon">📤</span>日报</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+// ===== 数据存储 =====
+const STORAGE_KEY = 'hotel_records_v1';
+const SETTINGS_KEY = 'hotel_settings_v1';
+
+function getAllRecords() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function saveAllRecords(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function getSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function saveSettings(s) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+// ===== 工具函数 =====
+function fmt(n) {
+  return '¥' + (Number(n) || 0).toFixed(2).replace(/\.00$/, '');
+}
+function fmtNum(n) {
+  return (Number(n) || 0).toFixed(2).replace(/\.00$/, '');
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ===== Tab 切换 =====
+function switchTab(page) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+  document.querySelectorAll('.btn-tab').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  if (page === 'records') renderRecords();
+  if (page === 'stats') renderStats();
+  if (page === 'report') renderReportList();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => switchTab(t.dataset.page));
+});
+
+// ===== 成本项管理 =====
+function addCostItem(amount = '', remark = '') {
+  const list = document.getElementById('costList');
+  const div = document.createElement('div');
+  div.className = 'cost-item';
+  div.innerHTML = `
+    <input type="number" placeholder="金额" min="0" step="0.01" value="${amount}" oninput="calcTotals()">
+    <input type="text" placeholder="支出项目备注" value="${remark}">
+    <button class="del-cost" onclick="this.parentElement.remove(); calcTotals()">×</button>
+  `;
+  list.appendChild(div);
+}
+
+// ===== 计算总额 =====
+function calcTotals() {
+  const rev = ['revCash','revWechat','revOta','revHQ'].reduce((s,id) => s + (Number(document.getElementById(id).value)||0), 0);
+  document.getElementById('revTotal').textContent = fmt(rev);
+  let cost = 0;
+  document.querySelectorAll('#costList .cost-item input[type="number"]').forEach(inp => {
+    cost += Number(inp.value) || 0;
+  });
+  document.getElementById('costTotal').textContent = fmt(cost);
+  document.getElementById('profitTotal').textContent = fmt(rev - cost);
+}
+
+// ===== 保存记录 =====
+function saveRecord() {
+  const date = document.getElementById('entryDate').value;
+  if (!date) { toast('请选择日期'); return; }
+  const records = getAllRecords();
+  const costs = [];
+  document.querySelectorAll('#costList .cost-item').forEach(item => {
+    const amt = Number(item.querySelector('input[type="number"]').value) || 0;
+    const remark = item.querySelector('input[type="text"]').value.trim();
+    if (amt > 0 || remark) costs.push({ amount: amt, remark: remark });
+  });
+  const rec = {
+    date: date,
+    roomsSold: Number(document.getElementById('roomsSold').value) || 0,
+    revenue: {
+      cash: Number(document.getElementById('revCash').value) || 0,
+      wechat: Number(document.getElementById('revWechat').value) || 0,
+      ota: Number(document.getElementById('revOta').value) || 0,
+      hq: Number(document.getElementById('revHQ').value) || 0
+    },
+    costs: costs,
+    updatedAt: new Date().toISOString()
+  };
+  records[date] = rec;
+  saveAllRecords(records);
+  toast('保存成功！');
+  setTimeout(() => switchTab('records'), 600);
+}
+
+// ===== 加载记录到表单 =====
+function loadRecordToDate(date) {
+  const records = getAllRecords();
+  const r = records[date];
+  // 清空成本
+  document.getElementById('costList').innerHTML = '';
+  if (r) {
+    document.getElementById('roomsSold').value = r.roomsSold || '';
+    document.getElementById('revCash').value = r.revenue.cash || '';
+    document.getElementById('revWechat').value = r.revenue.wechat || '';
+    document.getElementById('revOta').value = r.revenue.ota || '';
+    document.getElementById('revHQ').value = r.revenue.hq || '';
+    if (r.costs && r.costs.length > 0) {
+      r.costs.forEach(c => addCostItem(c.amount, c.remark));
+    }
+  } else {
+    ['roomsSold','revCash','revWechat','revOta','revHQ'].forEach(id => document.getElementById(id).value = '');
+  }
+  calcTotals();
+}
+
+// ===== 渲染记录列表 =====
+function renderRecords() {
+  const month = document.getElementById('filterMonth').value;
+  const all = getAllRecords();
+  let dates = Object.keys(all).sort().reverse();
+  if (month) {
+    dates = dates.filter(d => d.startsWith(month));
+  }
+  const list = document.getElementById('recordsList');
+  if (dates.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="icon">📋</div>暂无记录</div>';
+    return;
+  }
+  list.innerHTML = dates.map(date => {
+    const r = all[date];
+    const revTotal = r.revenue.cash + r.revenue.wechat + r.revenue.ota + r.revenue.hq;
+    const costTotal = (r.costs||[]).reduce((s,c) => s + (Number(c.amount)||0), 0);
+    const profit = revTotal - costTotal;
+    const profitCls = profit >= 0 ? 'profit-pos' : 'profit-neg';
+    const costsHtml = (r.costs||[]).map(c => 
+      `<div class="record-line cost"><span class="name">${c.remark || '未备注'}</span><span class="amount">${fmt(c.amount)}</span></div>`
+    ).join('') || '<div class="record-line cost"><span class="name">无支出</span><span class="amount">—</span></div>';
+    return `
+      <div class="record-day">
+        <div class="record-day-header" onclick="this.nextElementSibling.classList.toggle('open')">
+          <span class="date">${date}</span>
+          <span class="summary">收入${fmt(revTotal)} · 利润<span class="${profitCls}">${fmt(profit)}</span></span>
+        </div>
+        <div class="record-day-body">
+          <div class="record-section">
+            <div class="record-section-title">卖房间数：${r.roomsSold || 0} 间</div>
+          </div>
+          <div class="record-section">
+            <div class="record-section-title">营业收入</div>
+            <div class="record-line revenue"><span class="name">现金收入</span><span class="amount">${fmt(r.revenue.cash)}</span></div>
+            <div class="record-line revenue"><span class="name">微信支付宝</span><span class="amount">${fmt(r.revenue.wechat)}</span></div>
+            <div class="record-line revenue"><span class="name">OTA收入</span><span class="amount">${fmt(r.revenue.ota)}</span></div>
+            <div class="record-line revenue"><span class="name">总部直连</span><span class="amount">${fmt(r.revenue.hq)}</span></div>
+          </div>
+          <div class="record-section">
+            <div class="record-section-title">成本支出</div>
+            ${costsHtml}
+          </div>
+          <div class="record-actions">
+            <button class="btn btn-outline btn-sm" onclick="editRecord('${date}')">编辑</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)" onclick="deleteRecord('${date}')">删除</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function editRecord(date) {
+  document.getElementById('entryDate').value = date;
+  loadRecordToDate(date);
+  switchTab('entry');
+}
+
+function deleteRecord(date) {
+  if (!confirm('确认删除 ' + date + ' 的记录？')) return;
+  const all = getAllRecords();
+  delete all[date];
+  saveAllRecords(all);
+  toast('已删除');
+  renderRecords();
+}
+
+// ===== 统计 =====
+function renderStats() {
+  const month = document.getElementById('statsMonth').value;
+  const all = getAllRecords();
+  let dates = Object.keys(all).sort();
+  if (month) dates = dates.filter(d => d.startsWith(month));
+  
+  let totalRev = 0, totalCost = 0, totalRooms = 0;
+  let revBreak = { cash: 0, wechat: 0, ota: 0, hq: 0 };
+  let dailyData = [];
+
+  dates.forEach(date => {
+    const r = all[date];
+    const rev = r.revenue.cash + r.revenue.wechat + r.revenue.ota + r.revenue.hq;
+    const cost = (r.costs||[]).reduce((s,c) => s + (Number(c.amount)||0), 0);
+    totalRev += rev;
+    totalCost += cost;
+    totalRooms += r.roomsSold || 0;
+    revBreak.cash += r.revenue.cash;
+    revBreak.wechat += r.revenue.wechat;
+    revBreak.ota += r.revenue.ota;
+    revBreak.hq += r.revenue.hq;
+    dailyData.push({ date, rev, cost, profit: rev - cost, rooms: r.roomsSold || 0 });
+  });
+  dailyData.reverse();
+
+  document.getElementById('statRev').textContent = fmt(totalRev);
+  document.getElementById('statCost').textContent = fmt(totalCost);
+  document.getElementById('statProfit').textContent = fmt(totalRev - totalCost);
+  document.getElementById('statRooms').textContent = totalRooms;
+
+  // 收入构成
+  const breakdown = document.getElementById('revBreakdown');
+  const items = [
+    { name: '现金收入', val: revBreak.cash },
+    { name: '微信支付宝', val: revBreak.wechat },
+    { name: 'OTA收入', val: revBreak.ota },
+    { name: '总部直连', val: revBreak.hq }
+  ];
+  breakdown.innerHTML = items.map(item => {
+    const pct = totalRev > 0 ? (item.val / totalRev * 100).toFixed(1) : '0.0';
+    return `<div class="record-line revenue"><span class="name">${item.name}</span><span class="amount">${fmt(item.val)} (${pct}%)</span></div>`;
+  }).join('');
+
+  // 每日明细
+  const daily = document.getElementById('dailyBreakdown');
+  if (dailyData.length === 0) {
+    daily.innerHTML = '<div class="empty">暂无数据</div>';
+    return;
+  }
+  daily.innerHTML = dailyData.map(d => {
+    const cls = d.profit >= 0 ? 'profit-pos' : 'profit-neg';
+    return `<div class="record-line">
+      <span class="name">${d.date} (${d.rooms}间)</span>
+      <span class="amount">收${fmt(d.rev)} 支${fmt(d.cost)} 利<span class="${cls}">${fmt(d.profit)}</span></span>
+    </div>`;
+  }).join('');
+  updateBackupInfo();
+}
+
+// ===== 日报生成 =====
+let selectedReportDate = null;
+
+function renderReportList() {
+  const all = getAllRecords();
+  const dates = Object.keys(all).sort().reverse();
+  const list = document.getElementById('reportDayList');
+  if (dates.length === 0) {
+    list.innerHTML = '<div class="empty">暂无记录</div>';
+    document.getElementById('reportPreview').innerHTML = '';
+    return;
+  }
+  list.innerHTML = dates.map(date => {
+    const r = all[date];
+    const rev = r.revenue.cash + r.revenue.wechat + r.revenue.ota + r.revenue.hq;
+    const cost = (r.costs||[]).reduce((s,c) => s + (Number(c.amount)||0), 0);
+    const profit = rev - cost;
+    const cls = profit >= 0 ? 'profit-pos' : 'profit-neg';
+    return `<div class="report-day-item ${date === selectedReportDate ? 'selected' : ''}" onclick="selectReportDate('${date}')">
+      <span>${date}</span>
+      <span>利润 <span class="${cls}">${fmt(profit)}</span></span>
+    </div>`;
+  }).join('');
+  if (selectedReportDate && all[selectedReportDate]) {
+    renderReport(selectedReportDate);
+  } else {
+    document.getElementById('reportPreview').innerHTML = '';
+  }
+}
+
+function selectReportDate(date) {
+  selectedReportDate = date;
+  renderReportList();
+  renderReport(date);
+}
+
+function renderReport(date) {
+  const all = getAllRecords();
+  const r = all[date];
+  if (!r) return;
+  const rev = r.revenue.cash + r.revenue.wechat + r.revenue.ota + r.revenue.hq;
+  const cost = (r.costs||[]).reduce((s,c) => s + (Number(c.amount)||0), 0);
+  const profit = rev - cost;
+  const profitCls = profit >= 0 ? 'profit' : 'loss';
+  const costsHtml = (r.costs||[]).length > 0 
+    ? r.costs.map(c => `<div class="report-line cost"><span class="rl-label">${c.remark || '未备注'}</span><span class="rl-value">${fmt(c.amount)}</span></div>`).join('')
+    : '<div class="report-line"><span class="rl-label">无支出</span><span class="rl-value">¥0</span></div>';
+
+  document.getElementById('reportPreview').innerHTML = `
+    <div class="report-card" id="reportCard">
+      <div class="report-card-header">
+        <div class="rpt-title">🏨 酒店营业日报</div>
+        <div class="rrt-date">${date} · 卖房 ${r.roomsSold || 0} 间</div>
+      </div>
+      <div class="report-card-body">
+        <div class="report-section">
+          <div class="report-section-title">营业收入</div>
+          <div class="report-line revenue"><span class="rl-label">现金收入</span><span class="rl-value">${fmt(r.revenue.cash)}</span></div>
+          <div class="report-line revenue"><span class="rl-label">微信支付宝</span><span class="rl-value">${fmt(r.revenue.wechat)}</span></div>
+          <div class="report-line revenue"><span class="rl-label">OTA收入</span><span class="rl-value">${fmt(r.revenue.ota)}</span></div>
+          <div class="report-line revenue"><span class="rl-label">总部直连</span><span class="rl-value">${fmt(r.revenue.hq)}</span></div>
+          <div class="report-total profit"><span>收入合计</span><span class="rl-value">${fmt(rev)}</span></div>
+        </div>
+        <div class="report-section">
+          <div class="report-section-title">成本支出</div>
+          ${costsHtml}
+          <div class="report-total loss"><span>支出合计</span><span class="rl-value">${fmt(cost)}</span></div>
+        </div>
+        <div class="report-section">
+          <div class="report-total ${profitCls}" style="border-top:2px solid var(--brand)">
+            <span>净利润</span>
+            <span class="rl-value">${fmt(profit)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="report-card-footer">酒店记账系统 · 股东共享数据</div>
+    </div>
+  `;
+}
+
+function captureReport() {
+  const card = document.getElementById('reportCard');
+  if (!card) { toast('请先选择日期'); return; }
+  toast('正在生成图片...');
+  if (typeof html2canvas === 'undefined') {
+    toast('截图组件加载失败，请用复制文字');
+    return;
+  }
+  html2canvas(card, { scale: 2, backgroundColor: null }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = '酒店日报_' + (selectedReportDate || todayStr()) + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('图片已下载，可分享到群');
+  }).catch(() => {
+    toast('截图失败，请用复制文字');
+  });
+}
+
+function copyReportText() {
+  if (!selectedReportDate) { toast('请先选择日期'); return; }
+  const all = getAllRecords();
+  const r = all[selectedReportDate];
+  if (!r) return;
+  const rev = r.revenue.cash + r.revenue.wechat + r.revenue.ota + r.revenue.hq;
+  const cost = (r.costs||[]).reduce((s,c) => s + (Number(c.amount)||0), 0);
+  const profit = rev - cost;
+  const costs = (r.costs||[]).map(c => `  · ${c.remark || '未备注'}：${fmt(c.amount)}`).join('\n') || '  · 无支出';
+  const text = `【酒店营业日报】
+日期：${selectedReportDate}
+卖房间数：${r.roomsSold || 0} 间
+
+—— 营业收入 ——
+现金收入：${fmt(r.revenue.cash)}
+微信支付宝：${fmt(r.revenue.wechat)}
+OTA收入：${fmt(r.revenue.ota)}
+总部直连：${fmt(r.revenue.hq)}
+收入合计：${fmt(rev)}
+
+—— 成本支出 ——
+${costs}
+支出合计：${fmt(cost)}
+
+净利润：${fmt(profit)}`;
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => toast('已复制，可粘贴到群'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); toast('已复制，可粘贴到群'); }
+    catch(e) { toast('复制失败，请手动选择'); }
+    document.body.removeChild(ta);
+  }
+}
+
+// ===== 数据导出/导入（备份用） =====
+function getBackupInfo() {
+  const all = getAllRecords();
+  const dates = Object.keys(all);
+  if (dates.length === 0) return '当前无数据';
+  const latest = dates.sort().pop();
+  return '当前 ' + dates.length + ' 天记录，最新：' + latest;
+}
+
+function exportData() {
+  const all = getAllRecords();
+  const dates = Object.keys(all);
+  if (dates.length === 0) { toast('无数据可导出'); return; }
+  const payload = {
+    version: 1,
+    exportDate: new Date().toISOString(),
+    recordCount: dates.length,
+    hotelName: (getSettings().hotelName) || '我的酒店',
+    records: all
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = '酒店记账备份_' + todayStr() + '.json';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  toast('备份已下载，请发到文件传输助手');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      let records;
+      if (parsed.records && typeof parsed.records === 'object') {
+        records = parsed.records;
+      } else if (typeof parsed === 'object') {
+        // 兼容纯 records 对象
+        records = parsed;
+      } else {
+        throw new Error('格式不对');
+      }
+      const cnt = Object.keys(records).length;
+      if (cnt === 0) { toast('备份文件为空'); return; }
+      if (!confirm('将导入 ' + cnt + ' 天记录。\n注意：会覆盖同日期的现有数据，是否继续？')) {
+        input.value = '';
+        return;
+      }
+      const existing = getAllRecords();
+      const merged = Object.assign({}, existing, records);
+      saveAllRecords(merged);
+      const newCnt = Object.keys(merged).length;
+      toast('导入成功，共 ' + newCnt + ' 天记录');
+      renderRecords();
+      if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+      updateBackupInfo();
+      input.value = '';
+    } catch(err) {
+      toast('文件解析失败，请选备份生成的json');
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function updateBackupInfo() {
+  const el = document.getElementById('backupInfo');
+  if (el) el.textContent = getBackupInfo();
+}
+
+// ===== 初始化 =====
+document.getElementById('entryDate').value = todayStr();
+document.getElementById('filterMonth').value = todayStr().slice(0, 7);
+document.getElementById('statsMonth').value = todayStr().slice(0, 7);
+addCostItem();
+calcTotals();
+renderRecords();
+
+// 日期变化时自动加载已有记录
+document.getElementById('entryDate').addEventListener('change', function() {
+  loadRecordToDate(this.value);
+});
+</script>
+</body>
+</html>
